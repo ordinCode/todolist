@@ -7,27 +7,19 @@ function TodoApp() {
   const $itemFilters = document.querySelector(".filters");
   let currentFilter = FILTER_TYPE.ALL;
 
+  this.itemIndex = 0;
   this.todoItems = [];
   this.completed = [];
 
   this.inputItem = event => {
     const $newTodoTarget = event.target;
     if (isEnterKey(event)) {
-      this.todoItems.push($newTodoTarget.value);
+      const inputValue = $newTodoTarget.value;
+      this.todoItems.push(inputValue);
+      new InsertList(inputValue, this.itemIndex++);
       $newTodoTarget.value = "";
-      return new TodoList(findItemsByFilter(currentFilter), currentFilter);
     }
   };
-
-  const findItemsByFilter = currentFilter => {
-    if (currentFilter === FILTER_TYPE.ALL) {
-      return this.todoItems;
-    }
-    if (currentFilter === FILTER_TYPE.COMPLETED) {
-      return this.completed;
-    }
-    return findActiveItems(this.todoItems, this.completed);
-  }
 
   this.updateItem = event => {
     const $target = event.target;
@@ -46,18 +38,18 @@ function TodoApp() {
     $target.classList.add("selected");
 
     if ($target.classList.contains("all")) {
-      new TodoList(this.todoItems, FILTER_TYPE.ALL);
+      new ItemFilter($itemList, this.todoItems);
       currentFilter = FILTER_TYPE.ALL;
     }
 
     if ($target.classList.contains("completed")) {
-      new TodoList(this.completed, FILTER_TYPE.COMPLETED);
+      new ItemFilter($itemList, this.completed);
       currentFilter = FILTER_TYPE.COMPLETED;
     }
 
     if ($target.classList.contains("active")) {
       const activeItems = findActiveItems(this.todoItems, this.completed);
-      new TodoList(activeItems, FILTER_TYPE.ACTIVE);
+      new ItemFilter($itemList, activeItems);
       currentFilter = FILTER_TYPE.ACTIVE;
     }
   }
@@ -98,6 +90,15 @@ function TodoApp() {
   }
 }
 
+function InsertList(item, index) {
+
+  this.$todoList = document.querySelector("#todo-list");
+  this.$todoCount = document.querySelector("#todo-count");
+
+  this.$todoList.insertAdjacentHTML('beforeend', allTodoItemTemplate(item, index));
+  this.$todoCount.innerText = index + 1;
+}
+
 function TodoList(items, type) {
   const templateByType = findTemplateByType(type);
 
@@ -111,6 +112,19 @@ function TodoList(items, type) {
   };
 
   this.render(items)
+}
+
+function ItemFilter($itemList, selecetedItems) {
+  const itemLength = $itemList.children.length;
+  for (let i = 0; i < itemLength; i++) {
+    const item = $itemList.children[i];
+    const itemValue = item.children[1].value;
+    if (selecetedItems.includes(itemValue)) {
+      item.classList.remove('hidden');
+      continue;
+    }
+    item.classList.add('hidden');
+  }
 }
 
 const findTemplateByType = type => {
